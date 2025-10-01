@@ -2,40 +2,44 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Point Marker</title>
+  <title>Point Labeler</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 20px; }
-    #canvas { border: 2px solid #444; cursor: crosshair; }
-    .point { width: 8px; height: 8px; border-radius: 50%; background: red; position: absolute; }
-    #controls { margin-top: 15px; }
+    body { font-family: sans-serif; text-align: center; }
+    canvas { border: 2px solid #333; cursor: crosshair; margin-top: 10px; }
+    #controls { margin: 15px; }
+    #labelInfo { font-size: 18px; font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h2>Click points on the image</h2>
+  <h2>Click to label points</h2>
 
-  <label>Enter your ID: 
-    <input type="text" id="userId" placeholder="Your name or ID">
-  </label>
-  <br><br>
+  <label>Your ID:
+    <input type="text" id="userId" placeholder="Enter name or ID">
+  </label><br><br>
 
   <canvas id="canvas"></canvas>
+  <div id="labelInfo"></div>
+
   <div id="controls">
-    <button onclick="prevImage()">⬅ Prev</button>
-    <button onclick="nextImage()">Next ➡</button>
-    <button onclick="submitData()">✅ Submit</button>
+    <button onclick="prevImage()">⬅ Prev Image</button>
+    <button onclick="nextLabel()">➡ Next Label</button>
+    <button onclick="nextImage()">Next Image ➡</button>
+    <button onclick="downloadCSV()">⬇ Download CSV</button>
   </div>
 
   <script>
-    // 🔹 Replace with your Google Apps Script Web App URL
-    const SCRIPT_URL = "PASTE_YOUR_GOOGLE_WEBAPP_URL_HERE";
-
-    // 🔹 Add your images here
-    const images = [
-      "image1.jpg",
-      "image2.jpg"
+    // Labels + colors
+    const labels = [
+      "topBeaktip","botBeaktip","rightEye","rightHinge","leftEye","leftHinge"
     ];
+    const colors = ["red","blue","green","magenta","orange","cyan"];
+
+    // Images to annotate (add your files here!)
+    const images = ["image1.jpg","image2.jpg"];
+
     let currentImage = 0;
-    let points = [];
+    let currentLabel = 0;
+    let annotations = {}; // { imageName: {label: {x,y}} }
 
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
@@ -46,71 +50,82 @@
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img,0,0);
         redrawPoints();
       };
+      document.getElementById("labelInfo").textContent =
+        "Current Label: " + labels[currentLabel];
     }
 
-    canvas.addEventListener("click", (e) => {
+    canvas.addEventListener("click",(e)=>{
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      points.push({x, y});
+
+      if(!annotations[images[currentImage]]) {
+        annotations[images[currentImage]] = {};
+      }
+      annotations[images[currentImage]][labels[currentLabel]] = {x,y};
       redrawPoints();
     });
 
     function redrawPoints() {
-      ctx.drawImage(img, 0, 0);
-      ctx.fillStyle = "red";
-      points.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    }
-
-    function prevImage() {
-      if (currentImage > 0) {
-        currentImage--;
-        points = [];
-        loadImage();
-      }
-    }
-
-    function nextImage() {
-      if (currentImage < images.length - 1) {
-        currentImage++;
-        points = [];
-        loadImage();
-      }
-    }
-
-    async function submitData() {
-      const user = document.getElementById("userId").value;
-      if (!user) {
-        alert("Please enter your ID before submitting.");
-        return;
-      }
-      const payload = {
-        user: user,
-        image: images[currentImage],
-        points: points
-      };
-      try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: {"Content-Type": "application/json"}
+      ctx.drawImage(img,0,0);
+      const points = annotations[images[currentImage]];
+      if(points){
+        Object.keys(points).forEach((label,i)=>{
+          const p = points[label];
+          ctx.fillStyle = colors[labels.indexOf(label)];
+          ctx.beginPath();
+          ctx.arc(p.x,p.y,6,0,2*Math.PI);
+          ctx.fill();
+          ctx.fillText(label,p.x+8,p.y-8);
         });
-        alert("Data submitted!");
-        points = [];
-        redrawPoints();
-      } catch (err) {
-        alert("Error submitting data: " + err);
       }
+    }
+
+    function nextLabel() {
+      currentLabel = (currentLabel+1)%labels.length;
+      document.getElementById("labelInfo").textContent =
+        "Current Label: " + labels[currentLabel];
+    }
+    function prevImage() {
+      if(currentImage>0){ currentImage--; loadImage(); }
+    }
+    function nextImage() {
+      if(currentImage<images.length-1){ currentImage++; }
+      else { alert("You labeled all images! Now download CSV."); }
+      loadImage();
+    }
+
+    function downloadCSV() {
+      const user = document.getElementById("userId").value || "anonymous";
+      let csv = "scorer,," + labels.join(",,") + "\n";
+      csv += "coords,," + labels.map(()=> "x,y").join(",") + "\n";
+
+      images.forEach(imgName=>{
+        csv += "labeled-data,," + imgName + ",";
+        const points = annotations[imgName] || {};
+        labels.forEach(label=>{
+          if(points[label]) {
+            csv += points[label].x.toFixed(2)+","+points[label].y.toFixed(2)+",";
+          } else {
+            csv += "NaN,NaN,";
+          }
+        });
+        csv += "\n";
+      });
+
+      const blob = new Blob([csv], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = user+"_annotations.csv";
+      a.click();
     }
 
     loadImage();
   </script>
 </body>
 </html>
+
