@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Point Marker</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    #canvas { border: 2px solid #444; cursor: crosshair; }
+    .point { width: 8px; height: 8px; border-radius: 50%; background: red; position: absolute; }
+    #controls { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h2>Click points on the image</h2>
+
+  <label>Enter your ID: 
+    <input type="text" id="userId" placeholder="Your name or ID">
+  </label>
+  <br><br>
+
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <button onclick="prevImage()">⬅ Prev</button>
+    <button onclick="nextImage()">Next ➡</button>
+    <button onclick="submitData()">✅ Submit</button>
+  </div>
+
+  <script>
+    // 🔹 Replace with your Google Apps Script Web App URL
+    const SCRIPT_URL = "PASTE_YOUR_GOOGLE_WEBAPP_URL_HERE";
+
+    // 🔹 Add your images here
+    const images = [
+      "image1.jpg",
+      "image2.jpg"
+    ];
+    let currentImage = 0;
+    let points = [];
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    function loadImage() {
+      img.src = images[currentImage];
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        redrawPoints();
+      };
+    }
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      points.push({x, y});
+      redrawPoints();
+    });
+
+    function redrawPoints() {
+      ctx.drawImage(img, 0, 0);
+      ctx.fillStyle = "red";
+      points.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    }
+
+    function prevImage() {
+      if (currentImage > 0) {
+        currentImage--;
+        points = [];
+        loadImage();
+      }
+    }
+
+    function nextImage() {
+      if (currentImage < images.length - 1) {
+        currentImage++;
+        points = [];
+        loadImage();
+      }
+    }
+
+    async function submitData() {
+      const user = document.getElementById("userId").value;
+      if (!user) {
+        alert("Please enter your ID before submitting.");
+        return;
+      }
+      const payload = {
+        user: user,
+        image: images[currentImage],
+        points: points
+      };
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: {"Content-Type": "application/json"}
+        });
+        alert("Data submitted!");
+        points = [];
+        redrawPoints();
+      } catch (err) {
+        alert("Error submitting data: " + err);
+      }
+    }
+
+    loadImage();
+  </script>
+</body>
+</html>
