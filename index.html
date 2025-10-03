@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Point Labeler — With Eraser</title>
+  <title>Point Labeler — With Random ID</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body { font-family: system-ui, sans-serif; text-align: center; margin: 8px; }
@@ -16,10 +16,6 @@
 </head>
 <body>
   <h2>Point Labeler</h2>
-
-  <label>Your ID:
-    <input type="text" id="userId" placeholder="Enter name or ID">
-  </label>
 
   <div id="canvasWrap">
     <canvas id="canvas" width="800" height="600"></canvas>
@@ -50,6 +46,9 @@ const folderCandidates = ["savannah sparrow/","savannah_sparrow/"];
 let currentImageIndex = 0;
 let currentLabelIndex = 0;
 const annotations = {}; // { filename: { label: {x,y} } }
+
+// 🔹 Generate random 10-digit ID once per session
+const randomID = Math.floor(1000000000 + Math.random() * 9000000000).toString();
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -152,7 +151,6 @@ function clearCurrentLabel() {
 
 /* ---------- CSV ---------- */
 function downloadCSV() {
-  const user=document.getElementById("userId").value||"anon";
   let csv="scorer,,"+labels.join(",,")+"\ncoords,,"+labels.map(()=> "x,y").join(",")+"\n";
   filenames.forEach(f=>{
     csv+="labeled-data,,"+f+",";
@@ -164,7 +162,10 @@ function downloadCSV() {
     csv+="\n";
   });
   const blob=new Blob([csv],{type:"text/csv"}), url=URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download=user+"_annotations.csv"; a.click();
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=randomID+"_annotations.csv";  // 🔹 Use random ID
+  a.click();
 }
 
 /* ---------- Init ---------- */
