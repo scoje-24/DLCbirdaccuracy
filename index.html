@@ -5,13 +5,7 @@
   <title>Point Labeler</title>
   <style>
     body { font-family: sans-serif; text-align: center; }
-    canvas { 
-      border: 2px solid #333; 
-      cursor: crosshair; 
-      margin-top: 10px; 
-      max-width: 95%; 
-      height: auto; 
-    }
+    canvas { border: 2px solid #333; cursor: crosshair; margin-top: 10px; max-width: 95%; height: auto; }
     #controls { margin: 15px; }
     #labelInfo { font-size: 18px; font-weight: bold; margin-top: 10px; }
   </style>
@@ -40,29 +34,42 @@
     ];
     const colors = ["red","blue","green","magenta","orange","cyan"];
 
-    // Images to annotate (correct folder path, single array!)
+    // Images to annotate (stored inside "savannah_sparrow/")
     const images = [
-      "img0012.png","img0032.png","img0138.png","img0254.png","img0260.png",
-      "img0273.png","img0381.png","img0433.png","img0457.png","img0566.png",
-      "img0651.png","img0925.png","img1055.png","img1129.png","img1154.png",
-      "img1184.png","img1272.png","img1284.png","img1409.png","img1465.png",
-      "img1477.png","img1480.png","img1553.png","img1678.png","img1748.png",
-      "img1804.png","img1854.png","img2006.png","img2064.png","img2067.png",
-      "img2146.png","img2224.png","img2257.png","img2283.png","img2302.png",
-      "img2396.png","img2424.png","img2440.png","img2562.png","img2624.png",
-      "img2691.png","img2730.png","img2876.png","img2978.png","img3041.png",
-      "img3089.png","img3101.png","img3124.png","img3181.png","img3277.png",
-      "img3306.png","img3309.png","img3340.png","img3353.png","img3360.png",
-      "img3433.png","img3467.png","img3537.png","img3554.png","img3584.png",
-      "img3695.png","img3732.png","img3783.png","img3862.png","img3880.png",
-      "img3894.png","img3905.png","img3983.png","img3999.png","img4190.png",
-      "img4210.png","img4280.png","img4421.png","img4433.png","img4452.png",
-      "img4540.png","img4630.png","img4711.png","img4781.png","img4872.png",
-      "img4876.png","img4902.png","img4940.png","img4962.png","img4992.png",
-      "img5000.png","img5007.png","img5015.png","img5064.png","img5076.png",
-      "img5108.png","img5112.png","img5305.png","img5325.png","img5423.png",
-      "img5448.png","img5508.png"
-    ].map(f => "savannah sparrow/" + f);  // prefix folder path
+      "savannah_sparrow/img0012.png", "savannah_sparrow/img0032.png", "savannah_sparrow/img0138.png",
+      "savannah_sparrow/img0254.png", "savannah_sparrow/img0260.png", "savannah_sparrow/img0273.png",
+      "savannah_sparrow/img0381.png", "savannah_sparrow/img0433.png", "savannah_sparrow/img0457.png",
+      "savannah_sparrow/img0566.png", "savannah_sparrow/img0651.png", "savannah_sparrow/img0925.png",
+      "savannah_sparrow/img1055.png", "savannah_sparrow/img1129.png", "savannah_sparrow/img1154.png",
+      "savannah_sparrow/img1184.png", "savannah_sparrow/img1272.png", "savannah_sparrow/img1284.png",
+      "savannah_sparrow/img1409.png", "savannah_sparrow/img1465.png", "savannah_sparrow/img1477.png",
+      "savannah_sparrow/img1480.png", "savannah_sparrow/img1553.png", "savannah_sparrow/img1678.png",
+      "savannah_sparrow/img1748.png", "savannah_sparrow/img1804.png", "savannah_sparrow/img1854.png",
+      "savannah_sparrow/img2006.png", "savannah_sparrow/img2064.png", "savannah_sparrow/img2067.png",
+      "savannah_sparrow/img2146.png", "savannah_sparrow/img2224.png", "savannah_sparrow/img2257.png",
+      "savannah_sparrow/img2283.png", "savannah_sparrow/img2302.png", "savannah_sparrow/img2396.png",
+      "savannah_sparrow/img2424.png", "savannah_sparrow/img2440.png", "savannah_sparrow/img2562.png",
+      "savannah_sparrow/img2624.png", "savannah_sparrow/img2691.png", "savannah_sparrow/img2730.png",
+      "savannah_sparrow/img2876.png", "savannah_sparrow/img2978.png", "savannah_sparrow/img3041.png",
+      "savannah_sparrow/img3089.png", "savannah_sparrow/img3101.png", "savannah_sparrow/img3124.png",
+      "savannah_sparrow/img3181.png", "savannah_sparrow/img3277.png", "savannah_sparrow/img3306.png",
+      "savannah_sparrow/img3309.png", "savannah_sparrow/img3340.png", "savannah_sparrow/img3353.png",
+      "savannah_sparrow/img3360.png", "savannah_sparrow/img3433.png", "savannah_sparrow/img3467.png",
+      "savannah_sparrow/img3537.png", "savannah_sparrow/img3554.png", "savannah_sparrow/img3584.png",
+      "savannah_sparrow/img3695.png", "savannah_sparrow/img3732.png", "savannah_sparrow/img3783.png",
+      "savannah_sparrow/img3862.png", "savannah_sparrow/img3880.png", "savannah_sparrow/img3894.png",
+      "savannah_sparrow/img3905.png", "savannah_sparrow/img3983.png", "savannah_sparrow/img3999.png",
+      "savannah_sparrow/img4190.png", "savannah_sparrow/img4210.png", "savannah_sparrow/img4280.png",
+      "savannah_sparrow/img4421.png", "savannah_sparrow/img4433.png", "savannah_sparrow/img4452.png",
+      "savannah_sparrow/img4540.png", "savannah_sparrow/img4630.png", "savannah_sparrow/img4711.png",
+      "savannah_sparrow/img4781.png", "savannah_sparrow/img4872.png", "savannah_sparrow/img4876.png",
+      "savannah_sparrow/img4902.png", "savannah_sparrow/img4940.png", "savannah_sparrow/img4962.png",
+      "savannah_sparrow/img4992.png", "savannah_sparrow/img5000.png", "savannah_sparrow/img5007.png",
+      "savannah_sparrow/img5015.png", "savannah_sparrow/img5064.png", "savannah_sparrow/img5076.png",
+      "savannah_sparrow/img5108.png", "savannah_sparrow/img5112.png", "savannah_sparrow/img5305.png",
+      "savannah_sparrow/img5325.png", "savannah_sparrow/img5423.png", "savannah_sparrow/img5448.png",
+      "savannah_sparrow/img5508.png"
+    ];
 
     let currentImage = 0;
     let currentLabel = 0;
@@ -81,8 +88,7 @@
         redrawPoints();
       };
       document.getElementById("labelInfo").textContent =
-        "Current Label: " + labels[currentLabel] +
-        " | Image " + (currentImage+1) + " of " + images.length;
+        "Current Label: " + labels[currentLabel];
     }
 
     canvas.addEventListener("click",(e)=>{
@@ -101,7 +107,7 @@
       ctx.drawImage(img,0,0);
       const points = annotations[images[currentImage]];
       if(points){
-        Object.keys(points).forEach(label=>{
+        Object.keys(points).forEach((label)=>{
           const p = points[label];
           ctx.fillStyle = colors[labels.indexOf(label)];
           ctx.beginPath();
@@ -115,8 +121,7 @@
     function nextLabel() {
       currentLabel = (currentLabel+1)%labels.length;
       document.getElementById("labelInfo").textContent =
-        "Current Label: " + labels[currentLabel] +
-        " | Image " + (currentImage+1) + " of " + images.length;
+        "Current Label: " + labels[currentLabel];
     }
     function prevImage() {
       if(currentImage>0){ currentImage--; loadImage(); }
@@ -153,7 +158,6 @@
       a.click();
     }
 
-    // Load the first image at start
     loadImage();
   </script>
 </body>
