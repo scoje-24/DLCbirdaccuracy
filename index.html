@@ -1,164 +1,248 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Point Labeler</title>
+  <meta charset="utf-8" />
+  <title>Point Labeler — Debug-Friendly</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: sans-serif; text-align: center; }
-    canvas { border: 2px solid #333; cursor: crosshair; margin-top: 10px; max-width: 95%; height: auto; }
-    #controls { margin: 15px; }
-    #labelInfo { font-size: 18px; font-weight: bold; margin-top: 10px; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; text-align: center; margin: 8px; }
+    #canvasWrap { display:inline-block; border:2px solid #333; padding:6px; background:#fafafa; max-width:95vw; }
+    canvas { display:block; cursor:crosshair; max-width:100%; height:auto; }
+    #controls { margin:12px 0; }
+    #labelInfo { font-size:16px; font-weight:600; margin-top:8px; }
+    #status { font-size:13px; color:#555; margin-top:6px; white-space:pre-wrap; text-align:left; max-width:95vw; margin-left:auto; margin-right:auto; }
+    button { margin: 0 6px; padding:8px 12px; }
   </style>
 </head>
 <body>
-  <h2>Click to label points</h2>
+  <h2>Point Labeler</h2>
 
   <label>Your ID:
     <input type="text" id="userId" placeholder="Enter name or ID">
-  </label><br><br>
+  </label>
 
-  <canvas id="canvas"></canvas>
+  <div id="canvasWrap">
+    <canvas id="canvas" width="800" height="600"></canvas>
+  </div>
+
   <div id="labelInfo"></div>
 
   <div id="controls">
     <button onclick="prevImage()">⬅ Prev Image</button>
-    <button onclick="nextLabel()">➡ Next Label</button>
+    <button onclick="prevLabel()">⟲ Prev Label</button>
+    <button onclick="nextLabel()">Next Label ⟳</button>
     <button onclick="nextImage()">Next Image ➡</button>
+    <button onclick="clearCurrentLabel()">✖ Clear Label</button>
     <button onclick="downloadCSV()">⬇ Download CSV</button>
   </div>
 
-  <script>
-    // Labels + colors
-    const labels = [
-      "topBeaktip","botBeaktip","rightEye","rightHinge","leftEye","leftHinge"
-    ];
-    const colors = ["red","blue","green","magenta","orange","cyan"];
+  <div id="status">Status will appear here...</div>
 
-    // Images to annotate (stored inside "savannah_sparrow/")
-    const images = [
-      "savannah_sparrow/img0012.png", "savannah_sparrow/img0032.png", "savannah_sparrow/img0138.png",
-      "savannah_sparrow/img0254.png", "savannah_sparrow/img0260.png", "savannah_sparrow/img0273.png",
-      "savannah_sparrow/img0381.png", "savannah_sparrow/img0433.png", "savannah_sparrow/img0457.png",
-      "savannah_sparrow/img0566.png", "savannah_sparrow/img0651.png", "savannah_sparrow/img0925.png",
-      "savannah_sparrow/img1055.png", "savannah_sparrow/img1129.png", "savannah_sparrow/img1154.png",
-      "savannah_sparrow/img1184.png", "savannah_sparrow/img1272.png", "savannah_sparrow/img1284.png",
-      "savannah_sparrow/img1409.png", "savannah_sparrow/img1465.png", "savannah_sparrow/img1477.png",
-      "savannah_sparrow/img1480.png", "savannah_sparrow/img1553.png", "savannah_sparrow/img1678.png",
-      "savannah_sparrow/img1748.png", "savannah_sparrow/img1804.png", "savannah_sparrow/img1854.png",
-      "savannah_sparrow/img2006.png", "savannah_sparrow/img2064.png", "savannah_sparrow/img2067.png",
-      "savannah_sparrow/img2146.png", "savannah_sparrow/img2224.png", "savannah_sparrow/img2257.png",
-      "savannah_sparrow/img2283.png", "savannah_sparrow/img2302.png", "savannah_sparrow/img2396.png",
-      "savannah_sparrow/img2424.png", "savannah_sparrow/img2440.png", "savannah_sparrow/img2562.png",
-      "savannah_sparrow/img2624.png", "savannah_sparrow/img2691.png", "savannah_sparrow/img2730.png",
-      "savannah_sparrow/img2876.png", "savannah_sparrow/img2978.png", "savannah_sparrow/img3041.png",
-      "savannah_sparrow/img3089.png", "savannah_sparrow/img3101.png", "savannah_sparrow/img3124.png",
-      "savannah_sparrow/img3181.png", "savannah_sparrow/img3277.png", "savannah_sparrow/img3306.png",
-      "savannah_sparrow/img3309.png", "savannah_sparrow/img3340.png", "savannah_sparrow/img3353.png",
-      "savannah_sparrow/img3360.png", "savannah_sparrow/img3433.png", "savannah_sparrow/img3467.png",
-      "savannah_sparrow/img3537.png", "savannah_sparrow/img3554.png", "savannah_sparrow/img3584.png",
-      "savannah_sparrow/img3695.png", "savannah_sparrow/img3732.png", "savannah_sparrow/img3783.png",
-      "savannah_sparrow/img3862.png", "savannah_sparrow/img3880.png", "savannah_sparrow/img3894.png",
-      "savannah_sparrow/img3905.png", "savannah_sparrow/img3983.png", "savannah_sparrow/img3999.png",
-      "savannah_sparrow/img4190.png", "savannah_sparrow/img4210.png", "savannah_sparrow/img4280.png",
-      "savannah_sparrow/img4421.png", "savannah_sparrow/img4433.png", "savannah_sparrow/img4452.png",
-      "savannah_sparrow/img4540.png", "savannah_sparrow/img4630.png", "savannah_sparrow/img4711.png",
-      "savannah_sparrow/img4781.png", "savannah_sparrow/img4872.png", "savannah_sparrow/img4876.png",
-      "savannah_sparrow/img4902.png", "savannah_sparrow/img4940.png", "savannah_sparrow/img4962.png",
-      "savannah_sparrow/img4992.png", "savannah_sparrow/img5000.png", "savannah_sparrow/img5007.png",
-      "savannah_sparrow/img5015.png", "savannah_sparrow/img5064.png", "savannah_sparrow/img5076.png",
-      "savannah_sparrow/img5108.png", "savannah_sparrow/img5112.png", "savannah_sparrow/img5305.png",
-      "savannah_sparrow/img5325.png", "savannah_sparrow/img5423.png", "savannah_sparrow/img5448.png",
-      "savannah_sparrow/img5508.png"
-    ];
+<script>
+/* ---------- Config ---------- */
+// Labels + colors
+const labels = ["topBeaktip","botBeaktip","rightEye","rightHinge","leftEye","leftHinge"];
+const colors = ["#e11","#1177ee","#129912","#c71585","#f39a1c","#00a5a5"];
 
-    let currentImage = 0;
-    let currentLabel = 0;
-    let annotations = {}; // { imageName: {label: {x,y}} }
+// Filenames (base names only) — keep as a flat array
+const filenames = [
+ "img0012.png","img0032.png","img0138.png","img0254.png","img0260.png","img0273.png","img0381.png","img0433.png",
+ "img0457.png","img0566.png","img0651.png","img0925.png","img1055.png","img1129.png","img1154.png","img1184.png",
+ "img1272.png","img1284.png","img1409.png","img1465.png","img1477.png","img1480.png","img1553.png","img1678.png",
+ "img1748.png","img1804.png","img1854.png","img2006.png","img2064.png","img2067.png","img2146.png","img2224.png",
+ "img2257.png","img2283.png","img2302.png","img2396.png","img2424.png","img2440.png","img2562.png","img2624.png",
+ "img2691.png","img2730.png","img2876.png","img2978.png","img3041.png","img3089.png","img3101.png","img3124.png",
+ "img3181.png","img3277.png","img3306.png","img3309.png","img3340.png","img3353.png","img3360.png","img3433.png",
+ "img3467.png","img3537.png","img3554.png","img3584.png","img3695.png","img3732.png","img3783.png","img3862.png",
+ "img3880.png","img3894.png","img3905.png","img3983.png","img3999.png","img4190.png","img4210.png","img4280.png",
+ "img4421.png","img4433.png","img4452.png","img4540.png","img4630.png","img4711.png","img4781.png","img4872.png",
+ "img4876.png","img4902.png","img4940.png","img4962.png","img4992.png","img5000.png","img5007.png","img5015.png",
+ "img5064.png","img5076.png","img5108.png","img5112.png","img5305.png","img5325.png","img5423.png","img5448.png",
+ "img5508.png"
+];
 
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
+// Try these folder name candidates (in order). We'll encode properly when creating src.
+const folderCandidates = ["savannah sparrow/", "savannah_sparrow/"];
 
-    function loadImage() {
-      img.src = images[currentImage];
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img,0,0);
-        redrawPoints();
-      };
-      document.getElementById("labelInfo").textContent =
-        "Current Label: " + labels[currentLabel];
+/* ---------- State ---------- */
+let currentImageIndex = 0;
+let currentLabelIndex = 0;
+const annotations = {}; // { filename: { label: {x,y} } }
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const img = new Image();
+const statusEl = document.getElementById("status");
+const labelInfoEl = document.getElementById("labelInfo");
+
+/* ---------- Helpers ---------- */
+function logStatus(txt) {
+  console.log(txt);
+  statusEl.textContent = txt;
+}
+
+function setLabelInfo() {
+  labelInfoEl.textContent = `Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1} / ${filenames.length}  (${filenames[currentImageIndex]})`;
+}
+
+/* Attempt to load filename by trying each folder candidate in order. If none work, show error. */
+function loadImage() {
+  const baseName = filenames[currentImageIndex];
+  let tried = 0;
+
+  function tryNextFolder() {
+    if (tried >= folderCandidates.length) {
+      // all failed — show error placeholder
+      const msg = `Failed to load "${baseName}" from any candidate folder.\nTried: ${folderCandidates.join(", ")}`;
+      logStatus(msg + "\n(See browser console for details.)");
+      console.error("Image load failure for:", baseName);
+      // draw a placeholder so canvas isn't blank
+      drawPlaceholder(`Missing: ${baseName}`);
+      return;
     }
+    const folder = folderCandidates[tried++];
+    // use encodeURI so spaces become %20 etc.
+    const src = encodeURI(folder + baseName);
+    img.onload = () => {
+      // Set canvas internal resolution to natural size
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      // draw image into the canvas coordinate system (1:1)
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img, 0, 0);
+      redrawPoints(); // draw any saved points for this image
+      setLabelInfo();
+      logStatus(`Loaded: ${src}\nImage size: ${img.naturalWidth}×${img.naturalHeight}`);
+    };
+    img.onerror = (ev) => {
+      console.warn("Failed to load:", src, ev);
+      // try next folder candidate
+      tryNextFolder();
+    };
+    // start attempt
+    img.src = src;
+  }
 
-    canvas.addEventListener("click",(e)=>{
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+  tryNextFolder();
+}
 
-      if(!annotations[images[currentImage]]) {
-        annotations[images[currentImage]] = {};
-      }
-      annotations[images[currentImage]][labels[currentLabel]] = {x,y};
-      redrawPoints();
-    });
+function drawPlaceholder(text) {
+  const w = 800, h = 500;
+  canvas.width = w;
+  canvas.height = h;
+  ctx.fillStyle = "#eee";
+  ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = "#333";
+  ctx.font = "20px Arial";
+  ctx.fillText(text, 20, 40);
+}
 
-    function redrawPoints() {
-      ctx.drawImage(img,0,0);
-      const points = annotations[images[currentImage]];
-      if(points){
-        Object.keys(points).forEach((label)=>{
-          const p = points[label];
-          ctx.fillStyle = colors[labels.indexOf(label)];
-          ctx.beginPath();
-          ctx.arc(p.x,p.y,6,0,2*Math.PI);
-          ctx.fill();
-          ctx.fillText(label,p.x+8,p.y-8);
-        });
-      }
+/* Convert click client coords to image (canvas) pixel coords even if canvas is CSS-scaled. */
+function clientToImageCoords(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  // scale factors (canvas internal pixels per displayed pixel)
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+  return { x, y };
+}
+
+canvas.addEventListener("click", (ev) => {
+  // If image hasn't loaded, ignore clicks
+  if (!img || !img.complete || img.naturalWidth === 0) {
+    logStatus("No image loaded; click ignored.");
+    return;
+  }
+  const { x, y } = clientToImageCoords(ev.clientX, ev.clientY);
+  const fname = filenames[currentImageIndex];
+  if (!annotations[fname]) annotations[fname] = {};
+  annotations[fname][labels[currentLabelIndex]] = { x: +x.toFixed(2), y: +y.toFixed(2) };
+  redrawPoints();
+});
+
+/* Redraw image + saved points (points stored in image pixel coordinates) */
+function redrawPoints() {
+  // draw image (canvas internal coordinates)
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (img && img.complete && img.naturalWidth > 0) {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  } else {
+    drawPlaceholder("No image");
+    return;
+  }
+  const fname = filenames[currentImageIndex];
+  const pts = annotations[fname] || {};
+  // draw labels in order
+  labels.forEach((lab, i) => {
+    const p = pts[lab];
+    if (p) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(5, canvas.width * 0.006), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = `${Math.max(12, canvas.width * 0.012)}px Arial`;
+      ctx.fillText(lab, p.x + 8, p.y - 8);
     }
+  });
+}
 
-    function nextLabel() {
-      currentLabel = (currentLabel+1)%labels.length;
-      document.getElementById("labelInfo").textContent =
-        "Current Label: " + labels[currentLabel];
-    }
-    function prevImage() {
-      if(currentImage>0){ currentImage--; loadImage(); }
-    }
-    function nextImage() {
-      if(currentImage<images.length-1){ currentImage++; }
-      else { alert("You labeled all images! Now download CSV."); }
-      loadImage();
-    }
-
-    function downloadCSV() {
-      const user = document.getElementById("userId").value || "anonymous";
-      let csv = "scorer,," + labels.join(",,") + "\n";
-      csv += "coords,," + labels.map(()=> "x,y").join(",") + "\n";
-
-      images.forEach(imgName=>{
-        csv += "labeled-data,," + imgName + ",";
-        const points = annotations[imgName] || {};
-        labels.forEach(label=>{
-          if(points[label]) {
-            csv += points[label].x.toFixed(2)+","+points[label].y.toFixed(2)+",";
-          } else {
-            csv += "NaN,NaN,";
-          }
-        });
-        csv += "\n";
-      });
-
-      const blob = new Blob([csv], {type:"text/csv"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = user+"_annotations.csv";
-      a.click();
-    }
-
+/* ---------- Navigation / controls ---------- */
+function nextLabel() {
+  currentLabelIndex = (currentLabelIndex + 1) % labels.length;
+  setLabelInfo();
+}
+function prevLabel() {
+  currentLabelIndex = (currentLabelIndex - 1 + labels.length) % labels.length;
+  setLabelInfo();
+}
+function nextImage() {
+  if (currentImageIndex < filenames.length - 1) {
+    currentImageIndex++;
+    setLabelInfo();
     loadImage();
-  </script>
-</body>
-</html>
+  } else {
+    logStatus("Reached last image.");
+  }
+}
+function prevImage() {
+  if (currentImageIndex > 0) {
+    currentImageIndex--;
+    setLabelInfo();
+    loadImage();
+  } else {
+    logStatus("Already at first image.");
+  }
+}
+function clearCurrentLabel() {
+  const fname = filenames[currentImageIndex];
+  if (annotations[fname] && annotations[fname][labels[currentLabelIndex]]) {
+    delete annotations[fname][labels[currentLabelIndex]];
+    redrawPoints();
+  } else {
+    logStatus("No point to clear for current label on this image.");
+  }
+}
+
+/* ---------- CSV export (DeepLabCut-style) ---------- */
+function downloadCSV() {
+  const user = document.getElementById("userId").value || "anonymous";
+  // header lines
+  let csv = "scorer,," + labels.join(",,") + "\n";
+  csv += "coords,," + labels.map(()=> "x,y").join(",") + "\n";
+
+  filenames.forEach(fname => {
+    csv += "labeled-data,," + fname + ",";
+    const pts = annotations[fname] || {};
+    labels.forEach(lab => {
+      if (pts[lab]) csv += pts[lab].x.toFixed(2) + "," + pts[lab].y.toFixed(2) + ",";
+      else csv += "NaN,NaN,";
+    });
+    csv += "\n";
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${user}_annotations_
