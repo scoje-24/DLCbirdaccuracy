@@ -2,16 +2,16 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Point Labeler — Debug-Friendly</title>
+  <title>Point Labeler — With Eraser</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; text-align: center; margin: 8px; }
+    body { font-family: system-ui, sans-serif; text-align: center; margin: 8px; }
     #canvasWrap { display:inline-block; border:2px solid #333; padding:6px; background:#fafafa; max-width:95vw; }
     canvas { display:block; cursor:crosshair; max-width:100%; height:auto; }
     #controls { margin:12px 0; }
     #labelInfo { font-size:16px; font-weight:600; margin-top:8px; }
-    #status { font-size:13px; color:#555; margin-top:6px; white-space:pre-wrap; text-align:left; max-width:95vw; margin-left:auto; margin-right:auto; }
-    button { margin: 0 6px; padding:8px 12px; }
+    #status { font-size:13px; color:#555; margin-top:6px; white-space:pre-wrap; text-align:left; max-width:95vw; margin:0 auto; }
+    button { margin: 4px; padding:8px 12px; }
   </style>
 </head>
 <body>
@@ -32,7 +32,8 @@
     <button onclick="prevLabel()">⟲ Prev Label</button>
     <button onclick="nextLabel()">Next Label ⟳</button>
     <button onclick="nextImage()">Next Image ➡</button>
-    <button onclick="clearCurrentLabel()">✖ Clear Label</button>
+    <button onclick="clearCurrentLabel()">✖ Clear All Labels (this image)</button>
+    <button onclick="eraseCurrentPoint()">🩹 Erase Current Point</button>
     <button onclick="downloadCSV()">⬇ Download CSV</button>
   </div>
 
@@ -40,29 +41,10 @@
 
 <script>
 /* ---------- Config ---------- */
-// Labels + colors
 const labels = ["topBeaktip","botBeaktip","rightEye","rightHinge","leftEye","leftHinge"];
 const colors = ["#e11","#1177ee","#129912","#c71585","#f39a1c","#00a5a5"];
-
-// Filenames (base names only) — keep as a flat array
-const filenames = [
- "img0012.png","img0032.png","img0138.png","img0254.png","img0260.png","img0273.png","img0381.png","img0433.png",
- "img0457.png","img0566.png","img0651.png","img0925.png","img1055.png","img1129.png","img1154.png","img1184.png",
- "img1272.png","img1284.png","img1409.png","img1465.png","img1477.png","img1480.png","img1553.png","img1678.png",
- "img1748.png","img1804.png","img1854.png","img2006.png","img2064.png","img2067.png","img2146.png","img2224.png",
- "img2257.png","img2283.png","img2302.png","img2396.png","img2424.png","img2440.png","img2562.png","img2624.png",
- "img2691.png","img2730.png","img2876.png","img2978.png","img3041.png","img3089.png","img3101.png","img3124.png",
- "img3181.png","img3277.png","img3306.png","img3309.png","img3340.png","img3353.png","img3360.png","img3433.png",
- "img3467.png","img3537.png","img3554.png","img3584.png","img3695.png","img3732.png","img3783.png","img3862.png",
- "img3880.png","img3894.png","img3905.png","img3983.png","img3999.png","img4190.png","img4210.png","img4280.png",
- "img4421.png","img4433.png","img4452.png","img4540.png","img4630.png","img4711.png","img4781.png","img4872.png",
- "img4876.png","img4902.png","img4940.png","img4962.png","img4992.png","img5000.png","img5007.png","img5015.png",
- "img5064.png","img5076.png","img5108.png","img5112.png","img5305.png","img5325.png","img5423.png","img5448.png",
- "img5508.png"
-];
-
-// Try these folder name candidates (in order). We'll encode properly when creating src.
-const folderCandidates = ["savannah sparrow/", "savannah_sparrow/"];
+const filenames = ["img0012.png","img0032.png","img0138.png"]; // shorten for demo
+const folderCandidates = ["savannah sparrow/","savannah_sparrow/"];
 
 /* ---------- State ---------- */
 let currentImageIndex = 0;
@@ -80,169 +62,113 @@ function logStatus(txt) {
   console.log(txt);
   statusEl.textContent = txt;
 }
-
 function setLabelInfo() {
-  labelInfoEl.textContent = `Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1} / ${filenames.length}  (${filenames[currentImageIndex]})`;
+  labelInfoEl.textContent = `Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1}/${filenames.length} (${filenames[currentImageIndex]})`;
 }
 
-/* Attempt to load filename by trying each folder candidate in order. If none work, show error. */
+/* ---------- Image loading ---------- */
 function loadImage() {
   const baseName = filenames[currentImageIndex];
   let tried = 0;
-
   function tryNextFolder() {
     if (tried >= folderCandidates.length) {
-      // all failed — show error placeholder
-      const msg = `Failed to load "${baseName}" from any candidate folder.\nTried: ${folderCandidates.join(", ")}`;
-      logStatus(msg + "\n(See browser console for details.)");
-      console.error("Image load failure for:", baseName);
-      // draw a placeholder so canvas isn't blank
       drawPlaceholder(`Missing: ${baseName}`);
+      logStatus(`Failed to load ${baseName}`);
       return;
     }
     const folder = folderCandidates[tried++];
-    // use encodeURI so spaces become %20 etc.
-    const src = encodeURI(folder + baseName);
     img.onload = () => {
-      // Set canvas internal resolution to natural size
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
-      // draw image into the canvas coordinate system (1:1)
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(img, 0, 0);
-      redrawPoints(); // draw any saved points for this image
+      ctx.drawImage(img,0,0);
+      redrawPoints();
       setLabelInfo();
-      logStatus(`Loaded: ${src}\nImage size: ${img.naturalWidth}×${img.naturalHeight}`);
+      logStatus(`Loaded: ${folder}${baseName}`);
     };
-    img.onerror = (ev) => {
-      console.warn("Failed to load:", src, ev);
-      // try next folder candidate
-      tryNextFolder();
-    };
-    // start attempt
-    img.src = src;
+    img.onerror = tryNextFolder;
+    img.src = encodeURI(folder + baseName);
   }
-
   tryNextFolder();
 }
-
 function drawPlaceholder(text) {
   const w = 800, h = 500;
-  canvas.width = w;
-  canvas.height = h;
-  ctx.fillStyle = "#eee";
-  ctx.fillRect(0,0,w,h);
-  ctx.fillStyle = "#333";
-  ctx.font = "20px Arial";
-  ctx.fillText(text, 20, 40);
+  canvas.width = w; canvas.height = h;
+  ctx.fillStyle="#eee"; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle="#333"; ctx.font="20px Arial"; ctx.fillText(text,20,40);
 }
 
-/* Convert click client coords to image (canvas) pixel coords even if canvas is CSS-scaled. */
-function clientToImageCoords(clientX, clientY) {
+/* ---------- Canvas interaction ---------- */
+function clientToImageCoords(x,y) {
   const rect = canvas.getBoundingClientRect();
-  // scale factors (canvas internal pixels per displayed pixel)
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const x = (clientX - rect.left) * scaleX;
-  const y = (clientY - rect.top) * scaleY;
-  return { x, y };
+  return {
+    x:(x-rect.left)*(canvas.width/rect.width),
+    y:(y-rect.top)*(canvas.height/rect.height)
+  };
 }
-
-canvas.addEventListener("click", (ev) => {
-  // If image hasn't loaded, ignore clicks
-  if (!img || !img.complete || img.naturalWidth === 0) {
-    logStatus("No image loaded; click ignored.");
-    return;
-  }
-  const { x, y } = clientToImageCoords(ev.clientX, ev.clientY);
+canvas.addEventListener("click",(e)=>{
+  if(!img.complete) return;
+  const {x,y} = clientToImageCoords(e.clientX,e.clientY);
   const fname = filenames[currentImageIndex];
-  if (!annotations[fname]) annotations[fname] = {};
-  annotations[fname][labels[currentLabelIndex]] = { x: +x.toFixed(2), y: +y.toFixed(2) };
+  if(!annotations[fname]) annotations[fname]={};
+  annotations[fname][labels[currentLabelIndex]]={x:+x.toFixed(2),y:+y.toFixed(2)};
   redrawPoints();
 });
 
-/* Redraw image + saved points (points stored in image pixel coordinates) */
+/* ---------- Redraw ---------- */
 function redrawPoints() {
-  // draw image (canvas internal coordinates)
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  if (img && img.complete && img.naturalWidth > 0) {
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  } else {
-    drawPlaceholder("No image");
-    return;
-  }
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
   const fname = filenames[currentImageIndex];
-  const pts = annotations[fname] || {};
-  // draw labels in order
-  labels.forEach((lab, i) => {
-    const p = pts[lab];
-    if (p) {
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, Math.max(5, canvas.width * 0.006), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.font = `${Math.max(12, canvas.width * 0.012)}px Arial`;
-      ctx.fillText(lab, p.x + 8, p.y - 8);
+  const pts = annotations[fname]||{};
+  labels.forEach((lab,i)=>{
+    if(pts[lab]) {
+      ctx.fillStyle=colors[i];
+      ctx.beginPath(); ctx.arc(pts[lab].x,pts[lab].y,6,0,2*Math.PI); ctx.fill();
+      ctx.fillText(lab,pts[lab].x+8,pts[lab].y-8);
     }
   });
 }
 
-/* ---------- Navigation / controls ---------- */
-function nextLabel() {
-  currentLabelIndex = (currentLabelIndex + 1) % labels.length;
-  setLabelInfo();
-}
-function prevLabel() {
-  currentLabelIndex = (currentLabelIndex - 1 + labels.length) % labels.length;
-  setLabelInfo();
-}
-function nextImage() {
-  if (currentImageIndex < filenames.length - 1) {
-    currentImageIndex++;
-    setLabelInfo();
-    loadImage();
+/* ---------- Navigation ---------- */
+function nextLabel(){ currentLabelIndex=(currentLabelIndex+1)%labels.length; setLabelInfo();}
+function prevLabel(){ currentLabelIndex=(currentLabelIndex-1+labels.length)%labels.length; setLabelInfo();}
+function nextImage(){ if(currentImageIndex<filenames.length-1){currentImageIndex++; loadImage();} }
+function prevImage(){ if(currentImageIndex>0){currentImageIndex--; loadImage();} }
+
+/* ---------- Erasers ---------- */
+function eraseCurrentPoint() {
+  const fname = filenames[currentImageIndex];
+  if(annotations[fname] && annotations[fname][labels[currentLabelIndex]]) {
+    delete annotations[fname][labels[currentLabelIndex]];
+    logStatus(`Erased point "${labels[currentLabelIndex]}" on ${fname}`);
+    redrawPoints();
   } else {
-    logStatus("Reached last image.");
-  }
-}
-function prevImage() {
-  if (currentImageIndex > 0) {
-    currentImageIndex--;
-    setLabelInfo();
-    loadImage();
-  } else {
-    logStatus("Already at first image.");
+    logStatus(`No point to erase for "${labels[currentLabelIndex]}"`);
   }
 }
 function clearCurrentLabel() {
   const fname = filenames[currentImageIndex];
-  if (annotations[fname] && annotations[fname][labels[currentLabelIndex]]) {
-    delete annotations[fname][labels[currentLabelIndex]];
-    redrawPoints();
-  } else {
-    logStatus("No point to clear for current label on this image.");
-  }
+  if(annotations[fname]) { delete annotations[fname]; redrawPoints(); }
 }
 
-/* ---------- CSV export (DeepLabCut-style) ---------- */
+/* ---------- CSV ---------- */
 function downloadCSV() {
-  const user = document.getElementById("userId").value || "anonymous";
-  // header lines
-  let csv = "scorer,," + labels.join(",,") + "\n";
-  csv += "coords,," + labels.map(()=> "x,y").join(",") + "\n";
-
-  filenames.forEach(fname => {
-    csv += "labeled-data,," + fname + ",";
-    const pts = annotations[fname] || {};
-    labels.forEach(lab => {
-      if (pts[lab]) csv += pts[lab].x.toFixed(2) + "," + pts[lab].y.toFixed(2) + ",";
-      else csv += "NaN,NaN,";
+  const user=document.getElementById("userId").value||"anon";
+  let csv="scorer,,"+labels.join(",,")+"\ncoords,,"+labels.map(()=> "x,y").join(",")+"\n";
+  filenames.forEach(f=>{
+    csv+="labeled-data,,"+f+",";
+    const pts=annotations[f]||{};
+    labels.forEach(l=>{
+      if(pts[l]) csv+=pts[l].x+","+pts[l].y+",";
+      else csv+="NaN,NaN,";
     });
-    csv += "\n";
+    csv+="\n";
   });
+  const blob=new Blob([csv],{type:"text/csv"}), url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=user+"_annotations.csv"; a.click();
+}
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${user}_annotations_
+/* ---------- Init ---------- */
+setLabelInfo(); loadImage();
+</script>
+</body>
+</html>
