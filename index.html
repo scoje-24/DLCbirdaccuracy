@@ -22,11 +22,22 @@
       border-radius: 8px; 
       border: 1px solid #ddd;
     }
-    button { margin: 4px; padding:8px 12px; }
+    button, select { margin: 4px; padding:8px 12px; }
   </style>
 </head>
 <body>
   <h2>Point Labeler</h2>
+
+  <!-- 🔹 Species Selector -->
+  <div style="margin-bottom: 10px;">
+    <label for="speciesSelect"><strong>Select Species:</strong></label>
+    <select id="speciesSelect">
+      <option value="Savannah Sparrow">Savannah Sparrow</option>
+      <option value="Grasshopper Sparrow">Grasshopper Sparrow</option>
+      <option value="American Redstart">American Redstart</option>
+      <option value="Bachmans Sparrow">Bachmans Sparrow</option>
+    </select>
+  </div>
 
   <div id="canvasWrap">
     <canvas id="canvas" width="800" height="600"></canvas>
@@ -55,47 +66,40 @@
       <li><strong>"topBeaktip"</strong>: the pointed tip of the top beak (dark blue)</li>
       <li><strong>"botBeaktip"</strong>: the pointed tip of the bottom beak (white)</li>
       <li><strong>"rightHinge"</strong>: where the two halves of the beak meet on the right side (right side = bird’s right = your left, i.e. bird is facing right) (aqua)</li>
-      <li><strong>"leftHinge"</strong>: where the two halves of the beak meet on the left side (left side = bird’s left = your right, i.e. bird is facing left) (not shown)</li>
-      <li><strong>"leftEye"</strong>: center of the left eye (left side = bird’s left = your right)(not shown)</li>
+      <li><strong>"leftHinge"</strong>: where the two halves of the beak meet on the left side (left side = bird’s left = your right, i.e. bird is facing left)</li>
+      <li><strong>"leftEye"</strong>: center of the left eye (left side = bird’s left = your right)</li>
       <li><strong>"rightEye"</strong>: center of the right eye (right side = bird’s right = your left) (pink)</li>
     </ul>
 
     <p>Examples of the points are provided below. If one or more of these locations is not visible on your image, please do not place that point on the image.</p>
 
-    <p>When you have labelled all of the images, click <strong>"Download CSV"</strong> and email the generated CSV to me at:  
+    <p>When you have labelled all of the images, click <strong>"Download CSV"</strong> and email the generated CSV to:  
     <a href="mailto:jscot24@ilstu.edu">jscot24@ilstu.edu</a> with the subject line "DeepLabCut data"</p>
   </div>
-  <div style="margin-top: 20px; text-align: center;">
-  <img src="closedbeakEx.JPG" alt="Closed beak example" style="max-width: 500px; width: 100%; margin-bottom: 15px;">
-  <img src="openbeakex.JPG" alt="Open beak example" style="max-width: 500px; width: 100%;">
-</div>
 
+  <div style="margin-top: 20px; text-align: center;">
+    <img src="closedbeakEx.JPG" alt="Closed beak example" style="max-width: 500px; width: 100%; margin-bottom: 15px;">
+    <img src="openbeakex.JPG" alt="Open beak example" style="max-width: 500px; width: 100%;">
+  </div>
 
 <script>
 /* ---------- Config ---------- */
 const labels = ["topBeaktip","botBeaktip","rightEye","rightHinge","leftEye","leftHinge"];
 const colors = ["#e11","#1177ee","#129912","#c71585","#f39a1c","#00a5a5"];
-const filenames = ["img0012.png","img0032.png","img0138.png","img0254.png","img0260.png","img0273.png","img0381.png","img0433.png",
- "img0457.png","img0566.png","img0651.png","img0925.png","img1055.png","img1129.png","img1154.png","img1184.png",
- "img1272.png","img1284.png","img1409.png","img1465.png","img1477.png","img1480.png","img1553.png","img1678.png",
- "img1748.png","img1804.png","img1854.png","img2006.png","img2064.png","img2067.png","img2146.png","img2224.png",
- "img2257.png","img2283.png","img2302.png","img2396.png","img2424.png","img2440.png","img2562.png","img2624.png",
- "img2691.png","img2730.png","img2876.png","img2978.png","img3041.png","img3089.png","img3101.png","img3124.png",
- "img3181.png","img3277.png","img3306.png","img3309.png","img3340.png","img3353.png","img3360.png","img3433.png",
- "img3467.png","img3537.png","img3554.png","img3584.png","img3695.png","img3732.png","img3783.png","img3862.png",
- "img3880.png","img3894.png","img3905.png","img3983.png","img3999.png","img4190.png","img4210.png","img4280.png",
- "img4421.png","img4433.png","img4452.png","img4540.png","img4630.png","img4711.png","img4781.png","img4872.png",
- "img4876.png","img4902.png","img4940.png","img4962.png","img4992.png","img5000.png","img5007.png","img5015.png",
- "img5064.png","img5076.png","img5108.png","img5112.png","img5305.png","img5325.png","img5423.png","img5448.png",
- "img5508.png"]; // shorten for demo
-const folderCandidates = ["savannah sparrow/","savannah_sparrow/"];
+const filenames = ["img0012.png","img0032.png","img0138.png","img0254.png","img0260.png"]; // shorten for demo
+const speciesFolders = {
+  "Savannah Sparrow": ["savannah sparrow/","savannah_sparrow/"],
+  "Grasshopper Sparrow": ["grasshopper_sparrow/"],
+  "American Redstart": ["american_redstart/"],
+  "Bachman's Sparrow": ["bachman_sparrow/"]
+};
 
 /* ---------- State ---------- */
+let currentSpecies = "Savannah Sparrow";
 let currentImageIndex = 0;
 let currentLabelIndex = 0;
-const annotations = {}; // { filename: { label: {x,y} } }
-
-// 🔹 Generate random 10-digit ID once per session
+let annotationsBySpecies = {}; // species -> annotations dict
+let annotations = {}; // current active
 const randomID = Math.floor(1000000000 + Math.random() * 9000000000).toString();
 
 const canvas = document.getElementById("canvas");
@@ -103,20 +107,20 @@ const ctx = canvas.getContext("2d");
 const img = new Image();
 const statusEl = document.getElementById("status");
 const labelInfoEl = document.getElementById("labelInfo");
+const speciesSelect = document.getElementById("speciesSelect");
 
 /* ---------- Helpers ---------- */
-function logStatus(txt) {
-  console.log(txt);
-  statusEl.textContent = txt;
-}
+function logStatus(txt) { console.log(txt); statusEl.textContent = txt; }
 function setLabelInfo() {
-  labelInfoEl.textContent = `Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1}/${filenames.length} (${filenames[currentImageIndex]})`;
+  labelInfoEl.textContent = `Species: ${currentSpecies}  |  Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1}/${filenames.length} (${filenames[currentImageIndex]})`;
 }
 
 /* ---------- Image loading ---------- */
 function loadImage() {
   const baseName = filenames[currentImageIndex];
+  const folderCandidates = speciesFolders[currentSpecies] || [];
   let tried = 0;
+
   function tryNextFolder() {
     if (tried >= folderCandidates.length) {
       drawPlaceholder(`Missing: ${baseName}`);
@@ -137,6 +141,7 @@ function loadImage() {
   }
   tryNextFolder();
 }
+
 function drawPlaceholder(text) {
   const w = 800, h = 500;
   canvas.width = w; canvas.height = h;
@@ -152,6 +157,7 @@ function clientToImageCoords(x,y) {
     y:(y-rect.top)*(canvas.height/rect.height)
   };
 }
+
 canvas.addEventListener("click",(e)=>{
   if(!img.complete) return;
   const {x,y} = clientToImageCoords(e.clientX,e.clientY);
@@ -188,10 +194,9 @@ function eraseCurrentPoint() {
     delete annotations[fname][labels[currentLabelIndex]];
     logStatus(`Erased point "${labels[currentLabelIndex]}" on ${fname}`);
     redrawPoints();
-  } else {
-    logStatus(`No point to erase for "${labels[currentLabelIndex]}"`);
-  }
+  } else logStatus(`No point to erase for "${labels[currentLabelIndex]}"`);
 }
+
 function clearCurrentLabel() {
   const fname = filenames[currentImageIndex];
   if(annotations[fname]) { delete annotations[fname]; redrawPoints(); }
@@ -201,23 +206,54 @@ function clearCurrentLabel() {
 function downloadCSV() {
   let csv="scorer,,"+labels.join(",,")+"\ncoords,,"+labels.map(()=> "x,y").join(",")+"\n";
   filenames.forEach(f=>{
-    csv+="labeled-data,,"+f+",";
+    csv+="labeled-data,,"+f+","; 
     const pts=annotations[f]||{};
     labels.forEach(l=>{
-      if(pts[l]) csv+=pts[l].x+","+pts[l].y+",";
-      else csv+="NaN,NaN,";
+      if(pts[l]) csv+=pts[l].x+","+pts[l].y+","; else csv+="NaN,NaN,";
     });
     csv+="\n";
   });
   const blob=new Blob([csv],{type:"text/csv"}), url=URL.createObjectURL(blob);
   const a=document.createElement("a");
   a.href=url;
-  a.download=randomID+"_annotations.csv";  // 🔹 Use random ID
+  a.download=currentSpecies.replace(/\s+/g,"_")+"_"+randomID+"_annotations.csv";
   a.click();
+  annotations.downloaded = true;
+  logStatus("CSV downloaded for " + currentSpecies);
 }
 
+/* ---------- Species switching ---------- */
+speciesSelect.addEventListener("change", ()=>{
+  const newSpecies = speciesSelect.value;
+
+  // Warn if unsaved annotations exist
+  if(Object.keys(annotations).length > 0 && !annotations.downloaded) {
+    const proceed = confirm(
+      `⚠ You have unsaved annotations for ${currentSpecies}.\n\n` +
+      `Please download your CSV before switching species.\n\n` +
+      `Click OK to discard and continue, or Cancel to stay on current species.`
+    );
+    if(!proceed) {
+      speciesSelect.value = currentSpecies; // revert
+      return;
+    }
+  }
+
+  // Save current species annotations
+  annotationsBySpecies[currentSpecies] = annotations;
+
+  // Load or initialize new species
+  currentSpecies = newSpecies;
+  annotations = annotationsBySpecies[newSpecies] || {};
+  currentImageIndex = 0;
+  currentLabelIndex = 0;
+  setLabelInfo();
+  loadImage();
+});
+
 /* ---------- Init ---------- */
-setLabelInfo(); loadImage();
+setLabelInfo();
+loadImage();
 </script>
 </body>
 </html>
