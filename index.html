@@ -59,38 +59,43 @@
 
   <!-- 🔹 Instructions -->
   <div id="instructions">
-    <p><strong>Hello!</strong> Thank you for being willing to take part in this project. The data from the points you place will be used to confirm if a machine learning model can approximate human labeling accuracy. Even if you can’t label every image, any contribution helps!</p>
-    <p>Each species has its own photo folder. The same filenames are used for all species, but they live in different directories.</p>
+    <p><strong>Hello!</strong> Thank you for taking part in this project. Each species has its own folder and its own unique list of images. Please download your CSV before switching species to prevent data loss.</p>
   </div>
 
 <script>
 /* ---------- Config ---------- */
-// Points & colors
 const labels = ["topBeaktip","botBeaktip","rightEye","rightHinge","leftEye","leftHinge"];
 const colors = ["#e11","#1177ee","#129912","#c71585","#f39a1c","#00a5a5"];
 
-// Shared filenames (each species has these same image names)
-const filenames = [
-  "img0012.png","img0032.png","img0138.png",
-  "img0254.png","img0260.png","img0273.png",
-  "img0381.png","img0433.png"
-];
+// Folder paths and filenames per species
+const speciesData = {
+  "Savannah Sparrow": {
+    folder: "images/savannah_sparrow/",
+    files: ["img0012.png","img0032.png","img0138.png","img0254.png","img0260.png","img0273.png","img0381.png","img0433.png", "img0457.png","img0566.png","img0651.png","img0925.png","img1055.png","img1129.png","img1154.png","img1184.png", "img1272.png","img1284.png","img1409.png","img1465.png","img1477.png","img1480.png","img1553.png","img1678.png", "img1748.png","img1804.png","img1854.png","img2006.png","img2064.png","img2067.png","img2146.png","img2224.png", "img2257.png","img2283.png","img2302.png","img2396.png","img2424.png","img2440.png","img2562.png","img2624.png", "img2691.png","img2730.png","img2876.png","img2978.png","img3041.png","img3089.png","img3101.png","img3124.png", "img3181.png","img3277.png","img3306.png","img3309.png","img3340.png","img3353.png","img3360.png","img3433.png", "img3467.png","img3537.png","img3554.png","img3584.png","img3695.png","img3732.png","img3783.png","img3862.png", "img3880.png","img3894.png","img3905.png","img3983.png","img3999.png","img4190.png","img4210.png","img4280.png", "img4421.png","img4433.png","img4452.png","img4540.png","img4630.png","img4711.png","img4781.png","img4872.png", "img4876.png","img4902.png","img4940.png","img4962.png","img4992.png","img5000.png","img5007.png","img5015.png", "img5064.png","img5076.png","img5108.png","img5112.png","img5305.png","img5325.png","img5423.png","img5448.png", "img5508.png"];
+  },
+  "Grasshopper Sparrow": {
+    folder: "images/grasshopper_sparrow/",
+    files: ["img00159.png","img00232.png","img00455.png","img00907.png","img01359.png","img01408.png","img01461.png","img01478.png","img01685.png","img01795.png","img02142.png","img02236.png","img02482.png","img02562.png","img02891.png","img02969.png","img02996.png","img03284.png","img03375.png","img03583.png","img03609.png","img03770.png","img03998.png","img04323.png","img04740.png","img04845.png","img05138.png","img05439.png","img05906.png","img06163.png","img06233.png","img06358.png","img06361.png","img06403.png","img06596.png","img06806.png","img07154.png","img07314.png","img07771.png","img07878.png","img07888.png","img07915.png","img08243.png","img08370.png","img08382.png","img08678.png","img08745.png","img09261.png","img09265.png","img09605.png","img09617.png","img09786.png","img10023.png","img10152.png","img10326.png","img11130.png","img11134.png","img11375.png","img12254.png","img12677.png","img12966.png","img13697.png","img14167.png","img14212.png","img14364.png","img14592.png","img14836.png","img15204.png","img15290.png","img15736.png","img17219.png","img17348.png","img17479.png","img17737.png","img17809.png","img17977.png","img18052.png","img18308.png","img19211.png","img19340.png"]
 
-// Folder paths per species
-const speciesFolders = {
-  "Savannah Sparrow": "images/savannah_sparrow/",
-  "Grasshopper Sparrow": "images/grasshopper_sparrow/",
-  "American Redstart": "images/american_redstart/",
-  "Bachman's Sparrow": "images/bachman_sparrow/"
+  },
+  "American Redstart": {
+    folder: "images/american_redstart/",
+    files: ["img0001.png","img0041.png","img0064.png","img0085.png","img0087.png","img0123.png","img0130.png","img0192.png","img0241.png","img0248.png","img0261.png","img0276.png","img0288.png","img0299.png","img0307.png","img0316.png","img0336.png","img0338.png","img0355.png","img0371.png","img0406.png","img0408.png","img0465.png","img0466.png","img0492.png","img0498.png","img0499.png","img0503.png","img0512.png","img0533.png","img0561.png","img0569.png","img0588.png","img0589.png","img0601.png","img0602.png","img0604.png","img0614.png","img0629.png","img0638.png","img0647.png","img0747.png","img0767.png","img0773.png","img0821.png","img0822.png","img0840.png","img0850.png","img0856.png","img0892.png","img0901.png","img0955.png","img0969.png","img0988.png","img1056.png","img1060.png","img1174.png","img1292.png","img1319.png","img1357.png","img1366.png","img1374.png","img1378.png","img1386.png","img1447.png","img1453.png","img1483.png","img1489.png","img1520.png","img1530.png","img1566.png","img1567.png","img1643.png","img1678.png","img1688.png","img1696.png","img1718.png","img1729.png","img1802.png","img1832.png","img1961.png","img2027.png","img2042.png","img2079.png","img2166.png","img2181.png","img2206.png","img2248.png","img2264.png","img2283.png","img2305.png","img2309.png","img2340.png","img2350.png","img2405.png","img2481.png","img2486.png","img2509.png","img2532.png","img2558.png","img2592.png","img2660.png","img2737.png","img2791.png","img2833.png","img2836.png","img2847.png","img2890.png","img2919.png","img2933.png","img2939.png","img2945.png","img2962.png","img2980.png","img3005.png","img3012.png"]
+  },
+  "Bachman's Sparrow": {
+    folder: "images/bachman_sparrow/",
+    files: ["img00001.png","img00159.png","img00348.png","img00470.png","img00508.png","img00690.png","img01140.png","img01270.png","img01309.png","img01407.png","img01478.png","img01704.png","img01746.png","img01747.png","img01907.png","img02031.png","img02317.png","img02426.png","img02582.png","img02689.png","img02792.png","img03009.png","img03158.png","img03502.png","img03552.png","img03553.png","img03599.png","img03760.png","img03830.png","img03936.png","img03937.png","img04046.png","img04271.png","img04376.png","img04524.png","img04598.png","img04690.png","img04848.png","img05008.png","img05184.png","img05218.png","img05296.png","img05506.png","img05898.png","img06009.png","img06245.png","img06262.png","img06749.png","img06859.png","img07104.png","img07332.png","img07874.png","img08168.png","img08356.png","img08405.png","img08440.png","img08652.png","img08944.png","img09423.png","img09475.png","img09591.png","img10075.png","img10623.png","img10676.png","img10763.png","img10828.png","img10834.png","img10845.png","img11138.png","img11169.png","img11274.png","img11322.png","img11371.png","img11390.png","img11417.png","img11856.png","img11867.png","img11885.png","img12090.png","img12137.png"]
+  }
 };
 
 /* ---------- State ---------- */
 let currentSpecies = "Savannah Sparrow";
 let currentImageIndex = 0;
 let currentLabelIndex = 0;
-let annotationsBySpecies = {}; // Stores per-species annotation sets
+let annotationsBySpecies = {}; // Per-species storage
 let annotations = {};
 const randomID = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+let currentFiles = speciesData[currentSpecies].files;
 
 // Elements
 const canvas = document.getElementById("canvas");
@@ -103,13 +108,13 @@ const speciesSelect = document.getElementById("speciesSelect");
 /* ---------- Helpers ---------- */
 function logStatus(txt){ console.log(txt); statusEl.textContent = txt; }
 function setLabelInfo(){
-  labelInfoEl.textContent = `Species: ${currentSpecies}  |  Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1}/${filenames.length} (${filenames[currentImageIndex]})`;
+  labelInfoEl.textContent = `Species: ${currentSpecies}  |  Label: ${labels[currentLabelIndex]}  |  Image ${currentImageIndex+1}/${currentFiles.length} (${currentFiles[currentImageIndex]})`;
 }
 
 /* ---------- Image loading ---------- */
 function loadImage(){
-  const folder = speciesFolders[currentSpecies];
-  const fname = filenames[currentImageIndex];
+  const folder = speciesData[currentSpecies].folder;
+  const fname = currentFiles[currentImageIndex];
   const path = folder + fname;
 
   img.onload = () => {
@@ -146,7 +151,7 @@ function clientToImageCoords(x,y){
 canvas.addEventListener("click",(e)=>{
   if(!img.complete) return;
   const {x,y} = clientToImageCoords(e.clientX,e.clientY);
-  const fname = filenames[currentImageIndex];
+  const fname = currentFiles[currentImageIndex];
   if(!annotations[fname]) annotations[fname]={};
   annotations[fname][labels[currentLabelIndex]]={x:+x.toFixed(2),y:+y.toFixed(2)};
   redrawPoints();
@@ -155,7 +160,7 @@ canvas.addEventListener("click",(e)=>{
 /* ---------- Redraw ---------- */
 function redrawPoints(){
   ctx.drawImage(img,0,0,canvas.width,canvas.height);
-  const fname = filenames[currentImageIndex];
+  const fname = currentFiles[currentImageIndex];
   const pts = annotations[fname]||{};
   labels.forEach((lab,i)=>{
     if(pts[lab]){
@@ -169,12 +174,12 @@ function redrawPoints(){
 /* ---------- Navigation ---------- */
 function nextLabel(){ currentLabelIndex=(currentLabelIndex+1)%labels.length; setLabelInfo();}
 function prevLabel(){ currentLabelIndex=(currentLabelIndex-1+labels.length)%labels.length; setLabelInfo();}
-function nextImage(){ if(currentImageIndex<filenames.length-1){currentImageIndex++; loadImage();} }
+function nextImage(){ if(currentImageIndex<currentFiles.length-1){currentImageIndex++; loadImage();} }
 function prevImage(){ if(currentImageIndex>0){currentImageIndex--; loadImage();} }
 
 /* ---------- Erasers ---------- */
 function eraseCurrentPoint(){
-  const fname = filenames[currentImageIndex];
+  const fname = currentFiles[currentImageIndex];
   if(annotations[fname] && annotations[fname][labels[currentLabelIndex]]){
     delete annotations[fname][labels[currentLabelIndex]];
     logStatus(`Erased point "${labels[currentLabelIndex]}" on ${fname}`);
@@ -183,14 +188,15 @@ function eraseCurrentPoint(){
 }
 
 function clearCurrentLabel(){
-  const fname = filenames[currentImageIndex];
+  const fname = currentFiles[currentImageIndex];
   if(annotations[fname]) { delete annotations[fname]; redrawPoints(); }
 }
 
 /* ---------- CSV ---------- */
 function downloadCSV(){
+  const files = speciesData[currentSpecies].files;
   let csv="scorer,,"+labels.join(",,")+"\ncoords,,"+labels.map(()=> "x,y").join(",")+"\n";
-  filenames.forEach(f=>{
+  files.forEach(f=>{
     csv+="labeled-data,,"+f+",";
     const pts=annotations[f]||{};
     labels.forEach(l=>{
@@ -222,8 +228,10 @@ speciesSelect.addEventListener("change", ()=>{
   }
   // Save current annotations
   annotationsBySpecies[currentSpecies] = annotations;
+
   // Switch species
   currentSpecies = newSpecies;
+  currentFiles = speciesData[newSpecies].files;
   annotations = annotationsBySpecies[newSpecies] || {};
   currentImageIndex = 0;
   currentLabelIndex = 0;
