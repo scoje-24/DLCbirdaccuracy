@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>EPoint Labeler — Multi-Species Folders</title>
+  <title>FPoint Labeler — Multi-Species Folders</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body { font-family: system-ui, sans-serif; text-align: center; margin: 8px; }
@@ -59,21 +59,21 @@
 
   <!-- 🔹 Instructions -->
   <div id="instructions">
-    <p><strong>Hello!</strong> Thank you for being willing to take part in this project. The data from the points you place will be used to confirm if a machine learning model is able to approximate human labelling accuracy. Even if you are not able to get through all of the provided images, any data will help and is appreciated! There are 4 species avaliable to label, but note that previous labels will not save when switching between species.</p>
+    <p><strong>Hello!</strong> Thank you for being willing to take part in this project. The data from the points you place will be used to confirm if a machine learning model is able to approximate human labelling accuracy in order to estimate how different species of birds use their beaks when they sing. Even if you are not able to get through all of the provided images, any data will help and is appreciated! There are 4 species avaliable to label, but note that previous labels will not save when switching between species.</p>
 
-    <p>Points will save within a species selection when you click "next image," but they can be edited at anytime by clicking a new location on the image with that label sleected or clearing then replacing the label using "Erase Current Point."</p>
+    <p>There are 6 possible points to place on each image, as described below. These points can be placed by clicking on the image which will place the point stated underneath the image. To place the next label, click the "Next Label" button. After all visable body parts have been labelled, click "Next Image" to see the next photo. Points will save within a species selection when you click "next image," but they can be edited at anytime by clicking a new location on the image with that label selected or clearing then replacing the label using "Erase Current Point. If necessary, all points on an image can be deleted using "Clear all labels"</p>
 
-    <p>There are 6 potential points to place on each image:</p>
+    <p>There are 6 body parts to be potentially labelled on each image:</p>
     <ul>
-      <li><strong>"topBeaktip"</strong>: the pointed tip of the top beak (dark blue in example below)</li>
-      <li><strong>"botBeaktip"</strong>: the pointed tip of the bottom beak (white in example)</li>
-      <li><strong>"rightHinge"</strong>: where the two halves of the beak meet on the right side (cyan in example)(right side = bird’s right = your left, i.e. bird is facing right)</li>
-      <li><strong>"leftHinge"</strong>: where the two halves of the beak meet on the left side (not pictured; other side's cyan) (left side = bird’s left = your right, i.e. bird is facing left)</li>
-      <li><strong>"leftEye"</strong>: center of the left eye (not pictured; other side's pink)(left side = bird’s left = your right)</li>
-      <li><strong>"rightEye"</strong>: center of the right eye (pink in example) (right side = bird’s right = your left)</li>
+      <li><strong>"top beak tip"</strong>: the pointed tip of the top beak (dark blue in photo examples below)</li>
+      <li><strong>"bottom beak tip"</strong>: the pointed tip of the bottom beak (white)</li>
+      <li><strong>"right hinge"</strong>: where the two halves of the beak meet on the right side (cyan)(right side = bird’s right = your left, i.e. bird is facing right)</li>
+      <li><strong>"left hinge"</strong>: where the two halves of the beak meet on the left side (not pictured; other side's cyan) (left side = bird’s left = your right, i.e. bird is facing left)</li>
+      <li><strong>"left eye"</strong>: center of the left eye (not pictured; other side's pink)(left side = bird’s left = your right)</li>
+      <li><strong>"right eye"</strong>: center of the right eye (pink) (right side = bird’s right = your left)</li>
     </ul>
 
-    <p>If one or more of these locations is not visible on your image, please do not place that point on the image. </p>
+    <p>If one or more of these locations is not visible on your image, please do not place that point on the image. For example, if the end of the beak is out of frame, do not place top or bottom beak tip. </p>
 
     <p>When you have labelled all of the images, click <strong>"Download CSV"</strong> and email the generated CSV to me at:  
     <a href="mailto:jscot24@ilstu.edu">jscot24@ilstu.edu</a> with the subject line "DLC crowd data"</p>
